@@ -3,7 +3,7 @@ services:
   - type: web
     name: DQ-The-File-Donor
     env: python
-    startCommand: python3 bot.py
+    startCommand: gunicorn your_application.wsgi
     buildCommand: pip3 install -U -r requirements.txt
     repo: https://github.com/Joelkb/DQ-the-file-donor.git # optional
     region: oregon # optional (defaults to oregon)
