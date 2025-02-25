@@ -1,44 +1,32 @@
 import logging
 import logging.config
-import threading
-from flask import Flask
-from pyrogram import Client, __version__
-from pyrogram.raw.all import layer
-from database.ia_filterdb import Media, Media2, choose_mediaDB, db as clientDB
-from database.users_chats_db import db
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, SECONDDB_URI
-from utils import temp
-from typing import Union, Optional, AsyncGenerator
-from pyrogram import types
-from Script import script 
-from datetime import date, datetime
-import pytz
 
-# Configure Logging
+# Get logging configurations
 logging.config.fileConfig('logging.conf')
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("imdbpy").setLevel(logging.ERROR)
 
-# "Spidey" Watermark in Logs
+# Spidey in Logs
 logging.info("══════════════════════════════════════")
 logging.info("🔹 SpideyBot - Powered by Spidey 🔹")
-logging.info(f"🔹 Pyrogram Version: {__version__} 🔹")
 logging.info("══════════════════════════════════════")
 
-# Flask Web Server for Health Checks
-app_web = Flask(__name__)
+from pyrogram import Client, __version__  # Spidey 
+from pyrogram.raw.all import layer  # Spidey 
+from database.ia_filterdb import Media, Media2, choose_mediaDB, db as clientDB  # Spidey Watermark
+from database.users_chats_db import db  # Spidey 
+from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, SECONDDB_URI  # Spidey Watermark
+from utils import temp  # Spidey 
+from typing import Union, Optional, AsyncGenerator  # Spidey 
+from pyrogram import types  # Spidey 
+from Script import script  # Spidey 
+from datetime import date, datetime  # Spidey 
+import pytz  # Spidey 
+from sample_info import tempDict  # Spidey 
 
-@app_web.route('/')
-def home():
-    return "SpideyBot is running!"
+class Bot(Client):
 
-def run_web():
-    app_web.run(host="0.0.0.0", port=8080)
-
-threading.Thread(target=run_web, daemon=True).start()
-
-class SpideyBot(Client):
     def __init__(self):
         super().__init__(
             name=SESSION,
@@ -51,37 +39,35 @@ class SpideyBot(Client):
         )
 
     async def start(self):
-        logging.info("🚀 SpideyBot is Starting...")
+        logging.info("🚀 SpideyBot is Starting...")  # Spidey Watermark
         b_users, b_chats = await db.get_banned()
         temp.BANNED_USERS = b_users
         temp.BANNED_CHATS = b_chats
-
         await super().start()
         await Media.ensure_indexes()
         await Media2.ensure_indexes()
 
-        # Database Space Check
+        # Choose the right DB by checking the free space
         stats = await clientDB.command('dbStats')
         free_dbSize = round(512 - ((stats['dataSize']/(1024*1024)) + (stats['indexSize']/(1024*1024))), 2)
 
         if SECONDDB_URI and free_dbSize < 10:
-            logging.warning(f"⚠️ Low DB Space: {free_dbSize}MB left. Switching to Secondary DB.")
+            logging.info(f"⚠️ SpideyBot: Low DB Space: {free_dbSize}MB left. Switching to Secondary DB.")  # Spidey Watermark
             tempDict["indexDB"] = SECONDDB_URI
         elif not SECONDDB_URI:
-            logging.error("❌ SECONDDB_URI is Missing! Add it Now.")
+            logging.error("❌ SpideyBot: SECONDDB_URI is Missing! Add it Now.")  # Spidey Watermark
             exit()
         else:
-            logging.info(f"✅ DB Space: {free_dbSize}MB Available. Using Primary DB.")
+            logging.info(f"✅ SpideyBot: DB Space: {free_dbSize}MB Available. Using Primary DB.")  # Spidey Watermark
 
         await choose_mediaDB()
-
         me = await self.get_me()
         temp.ME = me.id
         temp.U_NAME = me.username
         temp.B_NAME = me.first_name
         self.username = '@' + me.username
 
-        logging.info(f"🤖 {me.first_name} (Username: {me.username}) is Online.")
+        logging.info(f"🤖 SpideyBot {me.first_name} (Username: {me.username}) is Online.")  # Spidey Watermark
         logging.info(LOG_STR)
         logging.info(script.LOGO)
 
@@ -92,17 +78,17 @@ class SpideyBot(Client):
 
         await self.send_message(
             chat_id=LOG_CHANNEL,
-            text=f"🚀 **SpideyBot Restarted**\n📅 Date: {today}\n🕒 Time: {time}"
-        )
+            text=script.RESTART_TXT.format(today, time))  # Spidey Watermark
+        
 
     async def stop(self, *args):
         await super().stop()
-        logging.info("🛑 SpideyBot Stopped. Goodbye!")
+        logging.info("🛑 SpideyBot Stopped. Goodbye!")  # Spidey Watermark
 
     async def iter_messages(
         self, chat_id: Union[int, str], limit: int, offset: int = 0
     ) -> Optional[AsyncGenerator["types.Message", None]]:
-        """Iterate through chat messages sequentially."""
+        """Iterate through a chat sequentially."""
         current = offset
         while True:
             new_diff = min(200, limit - current)
@@ -114,5 +100,5 @@ class SpideyBot(Client):
                 current += 1
 
 # Start the Bot
-app = SpideyBot()
+app = Bot()
 app.run()
